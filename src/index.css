@@ -92,3 +92,18 @@ button:focus-visible {
   grid-template-columns: 1fr 1fr;
   grid-gap: 1rem;
 }
+
+td {
+  white-space: nowrap;
+  overflow: hidden;
+  /* text-overflow: ellipsis; */
+}
+
+.phone-pad {
+  width: 100%;
+  height: auto;
+}
+.phone-pad td > button {
+  width: 100%;
+  height: auto;
+}
