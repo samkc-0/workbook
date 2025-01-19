@@ -1,248 +1,256 @@
-import { useMemo, useRef, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
+import { useState, ReactNode, useEffect, useMemo } from "react";
 import "./App.css";
+import "nes.css/css/nes.min.css";
+import { PhonePad } from "./PhonePad";
+import {
+  dotproduct,
+  fullMatrix,
+  Matrix,
+  PartialMatrix,
+  giveFeedbackMatrix,
+  getExpression,
+} from "./matrix";
 
-type Matrix = { data: string; rows: number; columns: number };
+type Highlighted = { mode: "row" | "column" | "cell"; i?: number; j?: number };
 
-function App(): JSX.Element {
-  // const A = { data: "1 2 3; 4 5 6; 7 8 9", rows: 3, columns: 3 };
-  // const B = { data: "1 1 1; 2 2 2; 1 0 1", rows: 3, columns: 3 };
-  const A = { data: "1 2; 3 4", rows: 2, columns: 2 };
-  const B = { data: "1 2; 3 4", rows: 2, columns: 2 };
-  const ans = stringifyMatrix(dotproduct(parseMatrix(A), parseMatrix(B)));
-  const [submitted, setSubmitted] = useState<number[]>([]);
-  const signatureCanvas = useRef(null);
+const levels = [
+  {
+    A: { data: [[1, 2]], rows: 1, columns: 2 },
+    B: { data: [[3], [4]], rows: 2, columns: 1 },
+  },
+  {
+    A: { data: [[1, 2, 3]], rows: 1, columns: 3 },
+    B: { data: [[4], [5], [6]], rows: 3, columns: 1 },
+  },
+  {
+    A: {
+      data: [
+        [1, 2],
+        [3, 4],
+      ],
+      rows: 1,
+      columns: 3,
+    },
+    B: { data: [[4], [5]], rows: 3, columns: 1 },
+  },
+  {
+    A: {
+      data: [
+        [1, 2, 3],
+        [3, 4, 5],
+        [6, 7, 8],
+      ],
+      rows: 3,
+      columns: 3,
+    },
+    B: {
+      data: [
+        [1, 2, 3],
+        [3, 4, 5],
+        [6, 7, 8],
+      ],
+      rows: 3,
+      columns: 3,
+    },
+  },
+];
+
+export default function App(): JSX.Element {
+  const { A, B } = levels[0];
+  const ans = dotproduct(A, B);
+  const [userInput, setUserInput] = useState<string>("");
+  const [displayedSubmission, setDisplayedSubmission] = useState<PartialMatrix>(
+    fullMatrix(ans.rows, ans.columns, 0)
+  );
+  const [currentCell, setCurrentCell] = useState<CellIndex>(
+    getCurrentCell(ans, userInput)
+  );
+
+  const startingLives = 3;
+  const [livesLeft, setLivesLeft] = useState<number>(startingLives);
+  const answerAsString: string = useMemo(() => ans.data.flat().join(""), [ans]);
+  const defaultInfo = "🟩⋅🟪";
+
+  useEffect(() => {
+    setCurrentCell(() => getCurrentCell(ans, userInput));
+  }, []);
+
+  useEffect(() => {
+    setDisplayedSubmission(() => giveFeedbackMatrix(ans, userInput));
+    setCurrentCell(() => getCurrentCell(ans, userInput));
+    if (isComplete()) {
+      getNext();
+    }
+    if (outOfLives()) {
+      reset();
+    }
+  }, [userInput]);
+
   return (
-    <div
+    <main
+      className="app"
+      autoFocus
+      tabIndex={0}
       onKeyDown={(event) => {
-        submitAnswer(parseInt(event.key));
+        console.log(event.key);
       }}
     >
+      <Lives total={startingLives} left={livesLeft} />
       <Frame
+        info={defaultInfo}
         A={A}
         B={B}
         ans={ans}
-        submitted={parseSubmission(submitted, A.rows, B.columns)}
+        submitted={displayedSubmission as Matrix}
+        currentCell={currentCell}
       />
-      <SignatureCanvas
-        ref={signatureCanvas}
-        penColor="green"
-        canvasProps={{ width: 500, height: 200, className: "sigCanvas" }}
-        onEnd={() => submitAnswer(1)}
-      />
-    </div>
+      <PhonePad onClick={submitAnswer} />
+    </main>
   );
-  function submitAnswer(ans: number) {
-    submitted.push(ans);
-    console.log(ans);
+
+  function submitAnswer(value: string) {
+    const testAns = userInput + value;
+    console.log(testAns, answerAsString);
+    if (answerAsString.startsWith(testAns)) {
+      setUserInput(userInput + value);
+    } else {
+      setLivesLeft(livesLeft - 1);
+    }
   }
 
-  function parseSubmission(
-    submitted: number[],
-    rows: number,
-    columns: number
-  ): Matrix {
-    let data = "";
-    for (let i = 0; i < rows; i++) {
-      for (let j = 0; j < columns; j++) {
-        data += submitted.pop();
-        data += " ";
-      }
-      data += ";";
-    }
-    return { data, rows, columns };
+  function outOfLives() {
+    return livesLeft === 0;
+  }
+  function isComplete() {
+    return userInput === String(ans.data.flat());
+  }
+  function getNext() {
+    return;
+  }
+  function reset() {
+    return;
+  }
+
+  function unpackLevel(id: number): Level {
+    const { A, B } = levels[id];
+    const ans = dotproduct(A, B);
+    return { A, B, ans };
   }
 }
 
 function Frame({
+  info,
   A,
   B,
   ans,
   submitted,
+  currentCell,
 }: {
+  info: string;
   A: Matrix;
   B: Matrix;
   ans: Matrix;
   submitted: Matrix;
+  currentCell: CellIndex;
 }): JSX.Element {
   return (
-    <>
-      <div className="matrix-grid">
-        {/* <LabelMatrix A={A} B={B} labels={["A", "B", "A.B"]} />
-         */}
-        <canvas width="auto" />
-        <Matrix matrix={B} highlight="columns" className="B" />
-        <Matrix matrix={A} highlight={"rows"} className="A" />
-        <AnswerMatrix matrix={submitted} highlight="cells" className="ans" />
-      </div>
-    </>
+    <div className="matrix-grid">
+      <Info>{info}</Info>
+      <MatrixView
+        matrix={B}
+        highlighted={{ mode: "column", j: currentCell.j }}
+        className="B"
+      />
+      <MatrixView
+        matrix={A}
+        highlighted={{ mode: "row", i: currentCell.i }}
+        className="A"
+      />
+      <AnswerMatrix
+        ans={ans}
+        submitted={submitted}
+        highlighted={{ mode: "cell", i: currentCell.i, j: currentCell.j }}
+        className="ans"
+      />
+    </div>
   );
 }
 
-// function PhonePad({}): JSX.Element {
-//   return (
-//     <table className="phone-pad">
-//       <tbody>
-//         <tr>
-//           <td>
-//             <button value="1">1</button>
-//           </td>
-//           <td>
-//             <button value="2">2</button>
-//           </td>
-//           <td>
-//             <button value="3">3</button>
-//           </td>
-//         </tr>
-//         <tr>
-//           <td>
-//             <button value="4">4</button>
-//           </td>
-//           <td>
-//             <button value="5">5</button>
-//           </td>
-//           <td>
-//             <button value="6">6</button>
-//           </td>
-//         </tr>
-//         <tr>
-//           <td>
-//             <button value="7">7</button>
-//           </td>
-//           <td>
-//             <button value="8">8</button>
-//           </td>
-//           <td>
-//             <button value="9">9</button>
-//           </td>
-//         </tr>
-//         <tr>
-//           <td>
-//             <button value="b" style={{ backgroundColor: "maroon" }}>
-//               b
-//             </button>
-//           </td>
-//           <td>
-//             <button value="0">0</button>
-//           </td>
-//           <td>
-//             <button value="n" style={{ backgroundColor: "darkgreen" }}>
-//               n
-//             </button>
-//           </td>
-//         </tr>
-//       </tbody>
-//     </table>
-//   );
-// }
+function Info({ children }: { children: ReactNode }) {
+  return <div className="info">{children}</div>;
+}
 
+type AnswerMatrixProps = {
+  ans: Matrix;
+  submitted: PartialMatrix;
+  highlighted?: Highlighted;
+  className: string;
+};
 function AnswerMatrix({
-  matrix,
-  highlight,
+  ans,
+  submitted,
+  highlighted = undefined,
   className = "",
-}: MatrixProps): JSX.Element {
-  const arrayVersion = useMemo(() => parseMatrix(matrix), [matrix]);
+}: AnswerMatrixProps): JSX.Element {
+  const matrix = (submitted as Matrix).data;
   return (
     <table className={`matrix ${className}`}>
-      <tbody>{display(arrayVersion)}</tbody>
+      <tbody>{display(matrix)}</tbody>
     </table>
   );
   function display(array2D: number[][]): JSX.Element[] {
     return array2D.map((row: number[], i: number) => (
       <tr key={`row-${i}`} className="row">
         {row.map((cell: number, j: number) => {
-          let group = highlight;
-          switch (highlight) {
-            case "rows":
-              group += `-${i}`;
-              break;
-            case "columns":
-              group += `-${j}`;
-              break;
-            case "cells":
-              group += `-${i},${j}`;
-              break;
-            default:
-              throw new Error(`Invalid group: ${highlight}`);
-          }
           return (
             <td
               // contentEditable={true}
               key={`col-${j}`}
-              className={`cell ${group}`}
-              onMouseEnter={
-                highlight === "cells" ? () => highlightGroup(i, j) : () => {}
-              }
-              onMouseLeave={
-                highlight === "cells" ? () => unhighlightGroup(i, j) : () => {}
-              }
-            ></td>
+              className={`cell ${
+                shouldHighlight(highlighted, i, j) && "highlighted"
+              }`}
+            >
+              <span
+                className={
+                  ans.data[i][j] !== cell && cell ? "incorrect" : "correct"
+                }
+              >
+                {cell}
+              </span>
+            </td>
           );
         })}
       </tr>
     ));
   }
-
-  function highlightGroup(i: number, j: number) {
-    [...document.getElementsByClassName(`cells-${i},${j}`)].forEach((element) =>
-      element.classList.add("highlighted")
-    );
-    [...document.getElementsByClassName(`rows-${i}`)].forEach((element) =>
-      element.classList.add("highlighted")
-    );
-    [...document.getElementsByClassName(`columns-${j}`)].forEach((element) =>
-      element.classList.add("highlighted")
-    );
-  }
-  function unhighlightGroup(i: number, j: number) {
-    [...document.getElementsByClassName(`cells-${i},${j}`)].forEach((element) =>
-      element.classList.remove("highlighted")
-    );
-    [...document.getElementsByClassName(`rows-${i}`)].forEach((element) =>
-      element.classList.remove("highlighted")
-    );
-    [...document.getElementsByClassName(`columns-${j}`)].forEach((element) =>
-      element.classList.remove("highlighted")
-    );
-  }
 }
 
 type MatrixProps = {
   matrix: Matrix;
-  highlight: "rows" | "columns" | "cells";
+  highlighted?: Highlighted;
   className: string;
 };
-function Matrix({
+function MatrixView({
   matrix,
-  highlight,
+  highlighted,
   className = "",
 }: MatrixProps): JSX.Element {
-  const arrayVersion = useMemo(() => parseMatrix(matrix), [matrix]);
   return (
     <table className={`matrix ${className}`}>
-      <tbody>{display(arrayVersion)}</tbody>
+      <tbody>{display(matrix.data)}</tbody>
     </table>
   );
   function display(array2D: number[][]): JSX.Element[] {
     return array2D.map((row: number[], i: number) => (
-      <tr key={`row-${i}`} className="row">
+      <tr key={`row-${i}`} className={`row`}>
         {row.map((cell: number, j: number) => {
-          let group = highlight;
-          switch (highlight) {
-            case "rows":
-              group += `-${i}`;
-              break;
-            case "columns":
-              group += `-${j}`;
-              break;
-            case "cells":
-              group += `-${i},${j}`;
-              break;
-            default:
-              throw new Error(`Invalid group: ${highlight}`);
-          }
           return (
-            <td key={`col-${j}`} className={`cell ${group}`}>
+            <td
+              key={`col-${j}`}
+              className={`cell ${
+                shouldHighlight(highlighted, i, j) ? "highlighted" : ""
+              }`}
+            >
               {cell}
             </td>
           );
@@ -252,106 +260,55 @@ function Matrix({
   }
 }
 
-function LabelMatrix({
-  A,
-  B,
-  labels = ["A", "B", "A.B"],
-}: {
-  A: Matrix;
-  B: Matrix;
-  labels: string[];
-}): JSX.Element {
+function Lives({ total, left }: { total: number; left: number }) {
   return (
-    <table className="label-matrix matrix">
-      <tbody>
-        {Array.from(new Array(B.rows)).map((_, i) => {
-          return (
-            <tr key={`labels-matrix-row-${i}`}>
-              {Array.from(new Array(A.columns)).map((_, j) => {
-                let content: string = "";
-                if (i === Math.floor(A.rows / 2) && j === B.columns - 1)
-                  content = labels[1];
-                if (i === A.columns - 1 && j === Math.floor(B.rows / 2))
-                  content = labels[0];
-                if (i == A.columns - 1 && j == B.rows - 1) content = labels[2];
-                return (
-                  <td className="cell" key={`labels-matrix-cell-${i}-${j}`}>
-                    {content}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <div className="lives">
+      {Array.from(new Array(total)).map((_, i) => {
+        const isEmpty = i + 1 <= left ? "" : "is-empty";
+        return (
+          <i
+            key={`life-${i + 1}`}
+            className={`nes-icon is-large heart ${isEmpty}`}
+          ></i>
+        );
+      })}
+    </div>
   );
 }
 
-export function parseMatrix({ data }: Matrix): number[][] {
-  const rows = data.split(";").filter((row) => row.length !== 0);
-  const cells = rows.map((row) =>
-    row
-      .trim()
-      .split(" ")
-      .filter((cell) => cell.length !== 0)
-      .map(Number)
-  );
-  return cells;
-}
-
-export function dotproduct(A: number[][], B: number[][]) {
-  const m = A[0].length;
-  const n = B.length;
-  if (m != n) {
-    throw new Error(
-      "A has ${n} rows but B has ${n} columns, cannot compute dot product."
-    );
+function shouldHighlight(
+  highlighted: Highlighted | undefined,
+  i: number,
+  j: number
+) {
+  if (!highlighted) return;
+  switch (highlighted.mode) {
+    case "row":
+      return highlighted.i === i;
+    case "column":
+      return highlighted.j === j;
+    case "cell":
+      return highlighted.i === i && highlighted.j === j;
+    default:
+      return false;
   }
-  const result = Array.from({ length: A.length }, () =>
-    Array(B[0].length).fill(0)
-  );
+}
 
-  for (let i = 0; i < A.length; i++) {
-    for (let j = 0; j < B[0].length; j++) {
-      for (let k = 0; k < B.length; k++) {
-        result[i][j] += A[i][k] * B[k][j];
-      }
+type CellIndex = { i?: number; j?: number };
+export function getCurrentCell(matrix: Matrix, userInput: string): CellIndex {
+  let stringified = "";
+  for (let i = 0; i < matrix.rows; i++) {
+    if (userInput.length <= 0) break;
+    for (let j = 0; j < matrix.columns; j++) {
+      if (stringified == userInput) return { i, j };
+      const initialStringified = stringified.slice(0, stringified.length);
+      stringified += String(matrix.data[i][j]);
+      if (
+        userInput.length > initialStringified.length &&
+        userInput.length < stringified.length
+      )
+        return { i, j };
     }
   }
-  return result;
+  return { i: 0, j: 0 };
 }
-
-export function stringifyMatrix(matrix: number[][]) {
-  return {
-    data: matrix
-      .map((row) => {
-        return row.join(" ");
-      })
-      .join(";"),
-    rows: matrix.length,
-    columns: matrix[0].length,
-  };
-}
-
-// export function toLatex(
-//   input: Matrix | Vector,
-//   transpose: false | "transpose" = false
-// ): string | never {
-//   switch (isMatrixOrVector(input)) {
-//     case "vector":
-//       const vector = toArray(input);
-//       const sep = transpose ? " \\\\ " : " & ";
-//       let latexCells = vector.join(sep);
-//       return "\\begin{bmatrix} " + latexCells + " \\end{bmatrix}";
-//     case "matrix":
-//       const matrix = toArray(input);
-//       // Extract matrix elements
-//       let latexRows = matrix.map((row: number[]) => row.join(" & "));
-//       return "\\begin{bmatrix} " + latexRows.join(" \\\\ ") + " \\end{bmatrix}";
-//     default:
-//       throw new Error("The input must be a THREE.Matrix4 instance.");
-//   }
-// }
-
-export default App;
