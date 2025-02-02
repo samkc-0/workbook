@@ -220,8 +220,8 @@ function Frame({
 
 function Info({ children }: { children: ReactNode }) {
   return (
-    <div className="info nes-container with-title is-centered is-rounded">
-      <p className="title">info</p>
+    <div className="info">
+      <p className="title"></p>
       {children}
     </div>
   );

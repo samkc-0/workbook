@@ -42,7 +42,7 @@ export function PhonePad({
     >
       {values.map((value) => (
         <button
-          className="nes-btn is-primary"
+          className=""
           key={`${value}-key`}
           onClick={() => onClick(value)}
         >
