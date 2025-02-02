@@ -1,93 +1,103 @@
+/* General Reset */
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Courier New", Courier, monospace;
+}
+
+body {
+  background: #f4f4f4;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
 }
 
 main {
-  width: 100vw;
-  height: 100vh;
-  position: absolute;
-  text-align: center;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: stretch;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 800px;
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .matrix-grid {
   display: grid;
-  grid-template-rows: 1fr 1fr;
+  grid-template-areas:
+    "info B"
+    "A answer";
   grid-template-columns: 1fr 1fr;
-  grid-gap: 1rem;
+  gap: 1rem;
+  width: 100%;
+  max-width: 600px;
+  margin: auto;
+}
+
+.info {
+  grid-area: info;
+  text-align: center;
+  padding: 1rem;
+  background: #ffcccb;
+  border: 3px solid #000;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
+.A {
+  grid-area: A;
+  background-color: hsl(152, 100%, 31%);
+  color: #fff;
+}
+
+.B {
+  grid-area: B;
+  background-color: hsl(273, 100%, 63%);
+  color: #fff;
+}
+
+.answer {
+  grid-area: answer;
+  background: #f0f0f0;
+  padding: 0.5rem;
+  border: 3px solid #000;
+  border-radius: 8px;
 }
 
 table.matrix {
   border-collapse: collapse;
-  margin-bottom: 1rem;
+  width: 100%;
+  text-align: center;
+  background: #fff;
   box-shadow: silver 2px 2px;
   font-size: 1.1rem;
 }
 
 .matrix td {
-  /* white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; */
-}
-
-.matrix.highlight-rows {
-  display: grid;
-  grid-template-rows: auto;
-}
-.phone-pad {
-  /* width: 100%;
-    height: 100%;
-    position: absolute; */
-  margin: auto;
-}
-
-.phone-pad:focus {
-  border: none;
-  outline: none;
-}
-.phone-pad button {
-  width: 33%;
-  height: auto;
-  margin: 1px;
-  border: solid black 2px;
   font-family: "Courier New", Courier, monospace;
-  box-shadow: silver 1px 1px;
-  font-weight: bold;
-  font-size: 1.2rem;
-  background-color: royalblue;
-  color: white;
-}
-.matrix .highlighted {
-  background-color: skyblue;
-  font-size: 1.3rem;
-}
-
-.matrix .cell {
-  font-family: "Courier New", Courier, monospace, monospace;
   font-weight: bold;
   width: 2rem;
   height: 2rem;
   border: solid black 2px;
   color: black;
+  transition: background-color 0.3s;
 }
 
-.A {
-  background-color: hsl(152, 100%, 31%);
+.matrix td:hover {
+  background-color: skyblue;
 }
 
-.A-text {
-  font-family: inherit;
-  color: hsl(152, 100%, 31%);
-}
-.B {
-  background-color: hsl(273, 100%, 63%);
-}
-.B-text {
-  font-family: inherit;
-  color: hsl(273, 100%, 63%);
+.matrix .highlighted {
+  background-color: skyblue;
+  font-size: 1.3rem;
 }
 
 .A .highlighted {
@@ -98,4 +108,83 @@ table.matrix {
 .B .highlighted {
   background-color: fuchsia;
   color: black;
+}
+
+.phone-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 300px;
+  margin: auto;
+}
+
+.phone-pad button {
+  width: 100%;
+  padding: 1rem;
+  border: solid black 2px;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: bold;
+  font-size: 1.2rem;
+  background-color: royalblue;
+  color: white;
+  box-shadow: silver 1px 1px;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.phone-pad button:hover {
+  background-color: navy;
+}
+
+.phone-pad button:active {
+  transform: scale(0.95);
+}
+
+.lives {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.nes-icon.heart {
+  color: red;
+  font-size: 2rem;
+}
+
+.nes-icon.heart.is-empty {
+  color: lightgray;
+}
+
+.correct {
+  color: green;
+}
+
+.incorrect {
+  color: red;
+}
+
+@media (max-width: 600px) {
+  .matrix-grid {
+    grid-template-areas:
+      "info"
+      "B"
+      "A"
+      "answer";
+    grid-template-columns: 1fr;
+  }
+
+  .matrix td {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .phone-pad button {
+    padding: 0.8rem;
+    font-size: 1rem;
+  }
+
+  main {
+    padding: 0.5rem;
+  }
 }
