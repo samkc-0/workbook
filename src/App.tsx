@@ -1,7 +1,6 @@
 import { useState, ReactNode, useEffect, useMemo } from "react";
-import "./App.css";
 import "nes.css/css/nes.min.css";
-import { PhonePad } from "./PhonePad";
+import { PhonePad } from "./Components/PhonePad.tsx";
 import {
   dotproduct,
   fullMatrix,
@@ -9,54 +8,56 @@ import {
   PartialMatrix,
   giveFeedbackMatrix,
   getExpression,
-} from "./matrix";
-
-type Highlighted = { mode: "row" | "column" | "cell"; i?: number; j?: number };
+} from "./Classes/Matrix.tsx";
+import { MatrixView, AnswerMatrix } from "./Components/MatrixView.tsx";
+import { atom, useAtom } from "jotai";
 
 const levels = [
-  {
-    A: { data: [[1, 2]], rows: 1, columns: 2 },
-    B: { data: [[3], [4]], rows: 2, columns: 1 },
-  },
-  {
-    A: { data: [[1, 2, 3]], rows: 1, columns: 3 },
-    B: { data: [[4], [5], [6]], rows: 3, columns: 1 },
-  },
   {
     A: {
       data: [
         [1, 2],
         [3, 4],
       ],
-      rows: 1,
-      columns: 3,
-    },
-    B: { data: [[4], [5]], rows: 3, columns: 1 },
-  },
-  {
-    A: {
-      data: [
-        [1, 2, 3],
-        [3, 4, 5],
-        [6, 7, 8],
-      ],
-      rows: 3,
-      columns: 3,
+      rows: 2,
+      columns: 2,
     },
     B: {
       data: [
-        [1, 2, 3],
-        [3, 4, 5],
-        [6, 7, 8],
+        [3, 2],
+        [3, 8],
       ],
-      rows: 3,
-      columns: 3,
+      rows: 2,
+      columns: 2,
     },
   },
+  // {
+  //   A: {
+  //     data: [
+  //       [1, 2, 3],
+  //       [3, 4, 5],
+  //       [6, 7, 8],
+  //     ],
+  //     rows: 3,
+  //     columns: 3,
+  //   },
+  //   B: {
+  //     data: [
+  //       [1, 2, 3],
+  //       [3, 4, 5],
+  //       [6, 7, 8],
+  //     ],
+  //     rows: 3,
+  //     columns: 3,
+  //   },
+  // },
 ];
 
+const currentLevel = atom(0);
+
 export default function App(): JSX.Element {
-  const { A, B } = levels[0];
+  const [levelId, setLevelId] = useAtom(currentLevel);
+  const { A, B } = levels[levelId];
   const ans = dotproduct(A, B);
   const [userInput, setUserInput] = useState<string>("");
   const [displayedSubmission, setDisplayedSubmission] = useState<PartialMatrix>(
@@ -65,47 +66,76 @@ export default function App(): JSX.Element {
   const [currentCell, setCurrentCell] = useState<CellIndex>(
     getCurrentCell(ans, userInput)
   );
+  const [levelsRemaining, setLevelsRemaining] = useState<boolean>(true);
 
   const startingLives = 3;
   const [livesLeft, setLivesLeft] = useState<number>(startingLives);
   const answerAsString: string = useMemo(() => ans.data.flat().join(""), [ans]);
-  const defaultInfo = "🟩⋅🟪";
+  const defaultInfo = (
+    <div>
+      <span className={"A-text"}>A</span>⋅<span className="B-text">B</span>
+      <br />
+      <div className="expression">
+        {getExpression(A, B, currentCell.i, currentCell.j)}
+        {" = ?"}
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     setCurrentCell(() => getCurrentCell(ans, userInput));
   }, []);
 
   useEffect(() => {
+    console.log(getRefAns());
     setDisplayedSubmission(() => giveFeedbackMatrix(ans, userInput));
     setCurrentCell(() => getCurrentCell(ans, userInput));
     if (isComplete()) {
+      flashColor("green");
       getNext();
     }
     if (outOfLives()) {
+      flashColor("red");
       reset();
     }
   }, [userInput]);
 
   return (
-    <main
-      className="app"
-      autoFocus
-      tabIndex={0}
-      onKeyDown={(event) => {
-        console.log(event.key);
-      }}
-    >
-      <Lives total={startingLives} left={livesLeft} />
-      <Frame
-        info={defaultInfo}
-        A={A}
-        B={B}
-        ans={ans}
-        submitted={displayedSubmission as Matrix}
-        currentCell={currentCell}
-      />
-      <PhonePad onClick={submitAnswer} />
-    </main>
+    <>
+      {levelsRemaining ? (
+        <main
+          className="app"
+          autoFocus
+          tabIndex={0}
+          onKeyDown={(event) => {
+            console.log(event.key);
+          }}
+        >
+          <Lives total={startingLives} left={livesLeft} />
+          <Frame
+            info={defaultInfo}
+            A={A}
+            B={B}
+            ans={ans}
+            submitted={displayedSubmission as Matrix}
+            currentCell={currentCell}
+          />
+          <PhonePad onClick={submitAnswer} />
+        </main>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <i className="nes-icon trophy is-large"></i>
+          <button
+            onClick={() => {
+              reset();
+              console.log("resetting");
+            }}
+          >
+            Restart?
+          </button>
+        </div>
+      )}
+    </>
   );
 
   function submitAnswer(value: string) {
@@ -122,19 +152,31 @@ export default function App(): JSX.Element {
     return livesLeft === 0;
   }
   function isComplete() {
-    return userInput === String(ans.data.flat());
+    return userInput === getRefAns();
   }
   function getNext() {
-    return;
+    clearInputs();
+    if (levelId + 1 >= levels.length) {
+      setLevelsRemaining(false);
+    } else {
+      return setLevelId((levelId + 1) % levels.length);
+    }
+  }
+  function clearInputs() {
+    setUserInput("");
   }
   function reset() {
-    return;
+    setLevelsRemaining(true);
+    clearInputs();
+    setLevelId(0);
   }
 
-  function unpackLevel(id: number): Level {
-    const { A, B } = levels[id];
-    const ans = dotproduct(A, B);
-    return { A, B, ans };
+  function getRefAns(): string {
+    return String(ans.data.flat()).split(",").join("");
+  }
+
+  function flashColor(colorName: string) {
+    console.log(colorName);
   }
 }
 
@@ -146,7 +188,7 @@ function Frame({
   submitted,
   currentCell,
 }: {
-  info: string;
+  info: string | ReactNode;
   A: Matrix;
   B: Matrix;
   ans: Matrix;
@@ -177,87 +219,12 @@ function Frame({
 }
 
 function Info({ children }: { children: ReactNode }) {
-  return <div className="info">{children}</div>;
-}
-
-type AnswerMatrixProps = {
-  ans: Matrix;
-  submitted: PartialMatrix;
-  highlighted?: Highlighted;
-  className: string;
-};
-function AnswerMatrix({
-  ans,
-  submitted,
-  highlighted = undefined,
-  className = "",
-}: AnswerMatrixProps): JSX.Element {
-  const matrix = (submitted as Matrix).data;
   return (
-    <table className={`matrix ${className}`}>
-      <tbody>{display(matrix)}</tbody>
-    </table>
+    <div className="info nes-container with-title is-centered is-rounded">
+      <p className="title">info</p>
+      {children}
+    </div>
   );
-  function display(array2D: number[][]): JSX.Element[] {
-    return array2D.map((row: number[], i: number) => (
-      <tr key={`row-${i}`} className="row">
-        {row.map((cell: number, j: number) => {
-          return (
-            <td
-              // contentEditable={true}
-              key={`col-${j}`}
-              className={`cell ${
-                shouldHighlight(highlighted, i, j) && "highlighted"
-              }`}
-            >
-              <span
-                className={
-                  ans.data[i][j] !== cell && cell ? "incorrect" : "correct"
-                }
-              >
-                {cell}
-              </span>
-            </td>
-          );
-        })}
-      </tr>
-    ));
-  }
-}
-
-type MatrixProps = {
-  matrix: Matrix;
-  highlighted?: Highlighted;
-  className: string;
-};
-function MatrixView({
-  matrix,
-  highlighted,
-  className = "",
-}: MatrixProps): JSX.Element {
-  return (
-    <table className={`matrix ${className}`}>
-      <tbody>{display(matrix.data)}</tbody>
-    </table>
-  );
-  function display(array2D: number[][]): JSX.Element[] {
-    return array2D.map((row: number[], i: number) => (
-      <tr key={`row-${i}`} className={`row`}>
-        {row.map((cell: number, j: number) => {
-          return (
-            <td
-              key={`col-${j}`}
-              className={`cell ${
-                shouldHighlight(highlighted, i, j) ? "highlighted" : ""
-              }`}
-            >
-              {cell}
-            </td>
-          );
-        })}
-      </tr>
-    ));
-  }
 }
 
 function Lives({ total, left }: { total: number; left: number }) {
@@ -274,24 +241,6 @@ function Lives({ total, left }: { total: number; left: number }) {
       })}
     </div>
   );
-}
-
-function shouldHighlight(
-  highlighted: Highlighted | undefined,
-  i: number,
-  j: number
-) {
-  if (!highlighted) return;
-  switch (highlighted.mode) {
-    case "row":
-      return highlighted.i === i;
-    case "column":
-      return highlighted.j === j;
-    case "cell":
-      return highlighted.i === i && highlighted.j === j;
-    default:
-      return false;
-  }
 }
 
 type CellIndex = { i?: number; j?: number };

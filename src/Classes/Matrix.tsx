@@ -1,22 +1,4 @@
-// export function toLatex(
-//   input: Matrix | Vector,
-//   transpose: false | "transpose" = false
-// ): string | never {
-//   switch (isMatrixOrVector(input)) {
-//     case "vector":
-//       const vector = toArray(input);
-//       const sep = transpose ? " \\\\ " : " & ";
-//       let latexCells = vector.join(sep);
-//       return "\\begin{bmatrix} " + latexCells + " \\end{bmatrix}";
-//     case "matrix":
-//       const matrix = toArray(input);
-//       // Extract matrix elements
-//       let latexRows = matrix.map((row: number[]) => row.join(" & "));
-//       return "\\begin{bmatrix} " + latexRows.join(" \\\\ ") + " \\end{bmatrix}";
-//     default:
-//       throw new Error("The input must be a THREE.Matrix4 instance.");
-//   }
-// }
+import { ReactNode } from "react";
 
 export type Matrix = { data: number[][]; rows: number; columns: number };
 export type PartialMatrix = {
@@ -24,43 +6,6 @@ export type PartialMatrix = {
   rows: number;
   columns: number;
 };
-// export interface IMatrix {
-//   data: number[][];
-//   rows: number;
-//   columns: number;
-// }
-
-// class Matrix implements IMatrix {
-//   public rows: number;
-//   public columns: number;
-//   public data: number[][];
-//   constructor(
-//     data: number[][],
-//     rows: number | undefined = undefined,
-//     columns: number | undefined = undefined
-//   ) {
-//     this.data = data;
-//     this.rows = rows || this.data.length;
-//     if (columns) {
-//       this.columns = columns;
-//     } else if (this.data[0]) {
-//       this.columns = this.data[0].length;
-//     } else {
-//       this.columns = 0;
-//     }
-//   }
-//   dot(other: IMatrix) {
-//     const result = dotproduct(this.data, other.data);
-//     return new Matrix(result, this.columns, this.rows);
-//   }
-//   fromArray(arr: number[], rows: number, columns: number) {
-//     const out = [];
-//     for (let i = 0; i < rows; i++) {
-//       out.push(this.data.slice(i * columns, i * columns + columns));
-//     }
-//     return out;
-//   }
-// }
 
 export function reshape<T extends Matrix | PartialMatrix>(
   arr: number[],
@@ -118,18 +63,6 @@ export function fullMatrix(
   return { data, rows, columns };
 }
 
-// export function parseMatrix({ data }: Matrix): number[][] {
-//   const rows = data.split(";").filter((row: string) => row.length !== 0);
-//   const cells = rows.map((row: string) =>
-//     row
-//       .trim()
-//       .split(" ")
-//       .filter((cell) => cell.length !== 0)
-//       .map(Number)
-//   );
-//   return cells;
-// }
-
 export function giveFeedbackMatrix(matrix: Matrix, s: string): PartialMatrix {
   // show the part of the matrix that is so far correct.
   const output = fullMatrix(matrix.rows, matrix.columns, 0) as PartialMatrix;
@@ -156,10 +89,16 @@ export function getExpression(
   B: Matrix,
   row: number,
   column: number
-): string {
-  let terms = [];
+): ReactNode {
+  let terms: ReactNode[] = [];
   for (let j = 0; j < A.columns; j++) {
-    terms.push(`${A.data[row][j]}*${B.data[j][column]}`);
+    terms.push(
+      <span key={`${j}th-term`}>
+        <span className="A-text">{A.data[row][j]}</span>×
+        <span className="B-text">{B.data[j][column]}</span>
+        {j < A.columns - 1 && " + "}
+      </span>
+    );
   }
-  return terms.join(" + ");
+  return terms;
 }

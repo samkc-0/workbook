@@ -6,7 +6,7 @@ import {
   giveFeedbackMatrix,
   PartialMatrix,
   getExpression,
-} from "./matrix";
+} from "./Classes/Matrix";
 import { describe, expect, it } from "vitest";
 
 // describe("parseMatrix can parse a...", () => {
