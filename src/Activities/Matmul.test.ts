@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getCurrentCell } from "./App";
+import { getCurrentCell } from "./Matmul";
 
 describe("getCurrentCell", () => {
   it("gets the next cell when the last one is filled", () => {

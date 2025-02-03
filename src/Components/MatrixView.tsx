@@ -10,7 +10,7 @@ export function AnswerMatrix({
   ans,
   submitted,
   highlighted = undefined,
-  className = "",
+  className = "answer",
 }: AnswerMatrixProps): JSX.Element {
   return (
     <table className={`matrix ${className}`}>
@@ -97,19 +97,15 @@ function shouldHighlight(
   i: number,
   j: number
 ) {
-  if (!highlighted) return;
+  if (matrix.rows < 1 || matrix.columns < 1) return false;
+  if (!highlighted) return false;
   switch (highlighted.mode) {
     case "row":
-      return highlighted.i === i && matrix.rows > 1;
+      return highlighted.i === i;
     case "column":
-      return highlighted.j === j && matrix.columns > 1;
+      return highlighted.j === j;
     case "cell":
-      return (
-        highlighted.i === i &&
-        highlighted.j === j &&
-        matrix.rows > 1 &&
-        matrix.columns > 1
-      );
+      return highlighted.i === i && highlighted.j === j;
     default:
       return false;
   }

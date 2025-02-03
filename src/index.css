@@ -7,13 +7,12 @@
 }
 
 body {
-  background: #f4f4f4;
+  background: #4d4d4d;
   color: #333;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: 1rem;
 }
 
 main {
@@ -22,12 +21,13 @@ main {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  width: 100%;
+  width: 100vw;
   max-width: 800px;
   padding: 1rem;
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .matrix-grid {
@@ -52,24 +52,28 @@ main {
   font-size: 1rem;
 }
 
+.A,
+.B,
+.answer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 3px solid #000;
+  color: #fff;
+}
+
 .A {
   grid-area: A;
-  background-color: hsl(152, 100%, 31%);
-  color: #fff;
 }
 
 .B {
   grid-area: B;
-  background-color: hsl(273, 100%, 63%);
-  color: #fff;
 }
 
 .answer {
   grid-area: answer;
-  background: #f0f0f0;
-  padding: 0.5rem;
-  border: 3px solid #000;
-  border-radius: 8px;
 }
 
 table.matrix {
@@ -79,13 +83,16 @@ table.matrix {
   background: #fff;
   box-shadow: silver 2px 2px;
   font-size: 1.1rem;
+  border: 3px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .matrix td {
   font-family: "Courier New", Courier, monospace;
   font-weight: bold;
-  width: 2rem;
-  height: 2rem;
+  width: 3rem;
+  height: 3rem;
   border: solid black 2px;
   color: black;
   transition: background-color 0.3s;
@@ -121,15 +128,16 @@ table.matrix {
 
 .phone-pad button {
   width: 100%;
-  padding: 1rem;
+  padding: 1.2rem;
   border: solid black 2px;
   font-family: "Courier New", Courier, monospace;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   background-color: royalblue;
   color: white;
   box-shadow: silver 1px 1px;
   transition: background-color 0.3s, transform 0.2s;
+  border-radius: 8px;
 }
 
 .phone-pad button:hover {
@@ -146,24 +154,20 @@ table.matrix {
   justify-content: center;
 }
 
-.nes-icon.heart {
-  color: red;
-  font-size: 2rem;
-}
-
-.nes-icon.heart.is-empty {
-  color: lightgray;
-}
-
 .correct {
-  color: green;
+  color: black;
 }
 
 .incorrect {
-  color: red;
+  color: gray;
 }
 
 @media (max-width: 600px) {
+  main {
+    padding: 0.5rem;
+    max-width: 100vw;
+  }
+
   .matrix-grid {
     grid-template-areas:
       "info"
@@ -171,20 +175,31 @@ table.matrix {
       "A"
       "answer";
     grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
 
   .matrix td {
-    width: 1.5rem;
-    height: 1.5rem;
-    font-size: 0.9rem;
-  }
-
-  .phone-pad button {
-    padding: 0.8rem;
+    width: 2.5rem;
+    height: 2.5rem;
     font-size: 1rem;
   }
 
-  main {
-    padding: 0.5rem;
+  .phone-pad {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+  }
+
+  .phone-pad button {
+    padding: 1rem;
+    font-size: 1.2rem;
+  }
+
+  .info {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+  }
+
+  .lives {
+    gap: 0.3rem;
   }
 }

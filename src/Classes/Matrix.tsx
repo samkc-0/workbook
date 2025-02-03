@@ -7,19 +7,19 @@ export type PartialMatrix = {
   columns: number;
 };
 
-export function reshape<T extends Matrix | PartialMatrix>(
-  arr: number[],
-  rows: number,
-  columns: number
-): T {
-  const copied: (number | undefined)[] = [...arr];
-  while (copied.length < rows * columns) copied.push(undefined);
-  const data = [];
-  for (let i = 0; i < rows; i++) {
-    data.push(copied.slice(i * columns, i * columns + columns));
-  }
-  return { data, rows, columns } as T;
-}
+// export function reshape<T extends Matrix | PartialMatrix>(
+//   arr: number[],
+//   rows: number,
+//   columns: number
+// ): T {
+//   const copied: (number | undefined)[] = [...arr];
+//   while (copied.length < rows * columns) copied.push(undefined);
+//   const data = [];
+//   for (let i = 0; i < rows; i++) {
+//     data.push(copied.slice(i * columns, i * columns + columns));
+//   }
+//   return { data, rows, columns } as T;
+// }
 
 export function dotproduct(A: Matrix, B: Matrix) {
   const n = A.columns;
@@ -87,9 +87,11 @@ export function giveFeedbackMatrix(matrix: Matrix, s: string): PartialMatrix {
 export function getExpression(
   A: Matrix,
   B: Matrix,
-  row: number,
-  column: number
+  row: number | undefined,
+  column: number | undefined
 ): ReactNode {
+  if (row == undefined || column == undefined)
+    throw Error(`Cannot get expression for A.B row=${row}, column=${column}`);
   let terms: ReactNode[] = [];
   for (let j = 0; j < A.columns; j++) {
     terms.push(
