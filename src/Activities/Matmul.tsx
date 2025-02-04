@@ -8,7 +8,7 @@ import {
   giveFeedbackMatrix,
   getExpression,
 } from "../Classes/Matrix.tsx";
-import { MatrixView, AnswerMatrix } from "../Components/MatrixView.tsx";
+import { AnswerMatrix, MatrixView } from "../Components/MatrixView.tsx";
 type ProblemSet = { currentProblem: number; problems: MatmulTask[] };
 
 const matmulProblems: ProblemSet = {
