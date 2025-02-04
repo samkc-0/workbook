@@ -177,10 +177,11 @@ export default function Matmul(): JSX.Element {
     if (problemId + 1 >= problems.length) {
       setLevelsRemaining(false);
     } else {
-      return setProblemSet((problemSet) => {
-        problemSet.currentProblem =
-          (problemId + 1) % problemSet.problems.length;
-        return problemSet;
+      setProblemSet((problemSet) => {
+        return {
+          ...problemSet,
+          currentProblem: (problemId + 1) % problemSet.problems.length,
+        };
       });
     }
   }
@@ -190,9 +191,11 @@ export default function Matmul(): JSX.Element {
   function reset() {
     setLevelsRemaining(true);
     clearInputs();
-    setProblemSet((problemSet: any) => {
-      problemSet.currentProblem = 0;
-      return problemSet;
+    setProblemSet((problemSet) => {
+      return {
+        ...problemSet,
+        currentProblem: 0,
+      };
     });
   }
 

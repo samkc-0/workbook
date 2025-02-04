@@ -81,6 +81,7 @@ table.matrix {
   width: 100%;
   text-align: center;
   background: #fff;
+  background: gray;
   box-shadow: silver 2px 2px;
   font-size: 1.1rem;
   border: 3px solid #000;
@@ -94,6 +95,7 @@ table.matrix {
   width: 3rem;
   height: 3rem;
   border: solid black 2px;
+  background-color: #fff;
   color: black;
   transition: background-color 0.3s;
 }
