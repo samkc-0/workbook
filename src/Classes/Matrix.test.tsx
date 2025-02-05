@@ -33,6 +33,17 @@ describe("dotproduct", () => {
     ).toEqual(expected);
   });
 });
+it("can compute the dotproduct for 2x1.1x1", () => {
+  const a = [[1], [2]];
+  const b = [[1]];
+  const expected = [[1], [2]];
+  expect(
+    dotproduct(
+      { data: a, rows: 2, columns: 1 },
+      { data: b, rows: 1, columns: 1 }
+    ).data
+  ).toEqual(expected);
+});
 
 describe("stringifyMatrix", () => {
   it("can put a matrix in string form", () => {

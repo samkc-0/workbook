@@ -78,6 +78,27 @@ export class PedagogicalMatrix {
     }
     this.flat = this.data.flat();
   }
+  static FromArray(
+    array: CellValue[],
+    rows: number,
+    columns: number
+  ): PedagogicalMatrix {
+    if (rows * columns != array.length)
+      throw new Error(
+        `cells in ${array} are not equal to ${rows}x${columns}=${
+          rows * columns
+        }. Cannot make a ${rows}x${columns} matrix from this array.`
+      );
+    const data = Array.from(new Array(rows)).map(() =>
+      Array.from(new Array(columns)).fill(undefined)
+    );
+    array.forEach((value, k) => {
+      const i = Math.floor(k / rows);
+      const j = k % columns;
+      data[i][j] = value;
+    });
+    return new PedagogicalMatrix(data, rows, columns);
+  }
 
   private get values(): CellValue[][] {
     return this.data.map((row: Cell[]) => {

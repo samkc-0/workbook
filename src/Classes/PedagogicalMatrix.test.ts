@@ -200,4 +200,11 @@ describe("PedagogicalMatrix", () => {
     ).toBe(true);
     expect(columnToCheck.every((cell) => cell.Highlighted === true)).toBe(true);
   });
+
+  test("can make a matrix from an array, if you specify the shape", () => {
+    const m = PedagogicalMatrix.FromArray([0, 1, 2, 3, 4, 5, 6, 7, 8], 3, 3);
+    expect(m.GetCell(0, 0).Value).toBe(0);
+    expect(m.GetCell(1, 1).Value).toBe(4);
+    expect(m.GetCell(2, 2).Value).toBe(8);
+  });
 });

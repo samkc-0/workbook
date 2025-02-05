@@ -16,6 +16,18 @@ const matmulProblems: ProblemSet = {
   problems: [
     {
       A: {
+        data: [[1], [2]],
+        rows: 2,
+        columns: 1,
+      },
+      B: {
+        data: [[3]],
+        rows: 1,
+        columns: 1,
+      },
+    },
+    {
+      A: {
         data: [
           [1, 2],
           [3, 4],
