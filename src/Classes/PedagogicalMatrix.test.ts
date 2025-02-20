@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
 import { PedagogicalMatrix } from "./PedagogicalMatrix";
+import { expect, describe, test } from "vitest";
 
 const matrix = new PedagogicalMatrix(
   [

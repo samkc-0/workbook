@@ -1,0 +1,29 @@
+main {
+  display: grid;
+  grid-template-areas:
+    "top-left-quadrant top-right-quadrant"
+    "bottom-left-quadrant bottom-right-quadrant"
+    "controls-area controls-area"
+    "controls-area controls-area";
+}
+
+.top-left-quadrant {
+  grid-area: top-left-quadrant;
+}
+
+.top-right-quadrant {
+  grid-area: top-right-quadrant;
+}
+
+.bottom-left-quadrant {
+  grid-area: bottom-left-quadrant;
+}
+
+.bottom-right-quadrant {
+  grid-area: bottom-right-quadrant;
+}
+
+.controls-area {
+  grid-area: controls-area;
+  grid-column: span 2;
+}
