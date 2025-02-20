@@ -9,7 +9,12 @@ import { ErrorBoundary } from "react-error-boundary";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary
-      fallback={<div className="text-red-500">Something went wrong</div>}
+      fallback={
+        <div className="text-red-600 h-screen w-screen text-3xl flex items-center justify-center border-dashed border-red-400 border-4 bg-red-200">
+          <span className="animate-pulse">🚨</span>Something went wrong!
+          <span className="animate-pulse">🚨</span>
+        </div>
+      }
     >
       <App />
     </ErrorBoundary>

@@ -3,12 +3,15 @@ main {
   grid-template-areas:
     "top-left-quadrant top-right-quadrant"
     "bottom-left-quadrant bottom-right-quadrant"
-    "controls-area controls-area"
     "controls-area controls-area";
+  aspect-ratio: 9/16;
+  margin: auto;
 }
 
 .top-left-quadrant {
   grid-area: top-left-quadrant;
+  min-height: 0;
+  min-width: 0;
 }
 
 .top-right-quadrant {
@@ -26,4 +29,9 @@ main {
 .controls-area {
   grid-area: controls-area;
   grid-column: span 2;
+}
+
+.numpad {
+  display: grid;
+  grid-template-areas: "1 2 3" "4 5 6" "7 8 9" "- 0 .";
 }
