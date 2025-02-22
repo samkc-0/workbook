@@ -8,10 +8,15 @@ main {
   margin: auto;
 }
 
+.top-left-quadrant,
+.top-right-quadrant,
+.bottom-left-quadrant,
+.bottom-right-quadrant {
+  opacity: 1;
+}
+
 .top-left-quadrant {
   grid-area: top-left-quadrant;
-  min-height: 0;
-  min-width: 0;
 }
 
 .top-right-quadrant {
