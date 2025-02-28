@@ -1,171 +1,168 @@
-import { useState, useEffect, useReducer } from "react";
-import { MatrixDisplay } from "./MatrixDisplay";
-import { VALID_INPUTS } from "./constants";
+import { useEffect, useRef, useState } from 'react'
+import { VALID_INPUTS } from './constants'
+import { MatrixDisplay } from './MatrixDisplay'
 
-type InputValue = (typeof VALID_INPUTS)[number];
-const url = "http://localhost:8000";
+type InputValue = (typeof VALID_INPUTS)[number]
 
-export type Matrix = {
-  data: (number | string)[][];
-  rows: number;
-  columns: number;
-  name: string;
-};
+export function DotProductMain(): JSX.Element {
+  const [problemSet, setProblemSet] = useState<MatmulProblem[] | undefined>(
+    undefined
+  )
+  const [loading, setLoading] = useState<boolean>(true)
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/dotproduct`)
+      .then((response) => {
+        return response.json()
+      })
+      .then((data) => {
+        setProblemSet(data as MatmulProblem[])
+        setLoading(false)
+      })
+      .catch((error) => {
+        throw new Error(
+          `Failed to fetch DotProduct problem set. The error was ${error}.`
+        )
+      })
+  }, [])
+  if (loading) return <Loading />
+  else if (problemSet) return <DotProduct problem={problemSet[0]} />
+  else throw new Error("Failed to load 'DotProduct'")
+}
 
-export type Blank = {
-  matrix: string;
-  row: number;
-  column: number;
-  symbol: string;
-  keys: string;
-};
+interface DotProductProps {
+  problem: MatmulProblem
+}
+export function DotProduct({ problem }: DotProductProps): JSX.Element {
+  console.log(JSON.stringify(problem))
+  const [question, setQuestion] = useState<MatmulQuestion>(problem.question)
+  const answer = problem.answer
+  const [answerIndex, setAnswerIndex] = useState<number>(0)
+  const [lives, setLives] = useState<number>(3)
+  const main = useRef<HTMLElement | null>(null)
 
-export type MatmulProblem = {
-  left: Matrix;
-  top: Matrix;
-  product: Matrix;
-  blanks: Blank[];
-  answers: string[];
-};
-
-type BlankActionGetNext = { type: "get_next" };
-type BlankActionPopulate = { type: "populate"; payload: Blank[] };
-type BlanksAction = BlankActionGetNext | BlankActionPopulate;
-
-export function DotProduct(): JSX.Element {
-  const [problem, setProblem] = useState<MatmulProblem | undefined>(undefined);
-  const [userInput, setUserInput] = useState<string>("");
-
-  const [blanksIndex, setBlanksIndex] = useState<number>(0);
-
-  function getCurrentBlank(): Blank {
-    if (!problem) throw new Error(`No problem to get blanks from`);
-    return problem.blanks[blanksIndex];
+  const handleSubmit = (value: InputValue) => {
+    if (!answer.length) return
+    if (value != answer[answerIndex].key) {
+      console.log(
+        `User was supposed to press ${answer[answerIndex].key} but pressed ${value}`
+      )
+      console.log(`Deducting 1 life.`)
+      setLives(lives - 1)
+    } else handleCorrectAnswer()
   }
-
-  function handleSubmit(value: string): void {
-    
-  }
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>): void {
-    if (VALID_INPUTS.includes(event.key as InputValue)) handleSubmit(event.key);
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLElement>) => {
+    const key = event.key as InputValue
+    if (VALID_INPUTS.includes(key)) handleSubmit(key)
   }
 
   useEffect(() => {
-    const doFetch = async () => {
-      await fetch(`${import.meta.env.VITE_API_URL}/dotproduct/`)
-        .then((response) => response.json())
-        .then((payload) => {
-          const storedProgress = JSON.parse(
-            localStorage.getItem("userProgress") || "{}"
-          );
-          const questionNumber =
-            storedProgress.dotProduct?.currentQuestion || 0;
-          const blanks = payload[questionNumber].question.blanks;
-          setProblem(
-            blankify(payload[questionNumber].question, blanks) as MatmulProblem
-          );
-        });
-    };
-    doFetch();
-  }, []);
+    if (main.current) main.current.focus()
+  }, [])
 
-  useEffect(() => {
-    if (problem) setProblem((prev) => blankifyCurrent(prev as MatmulProblem));
-  }, [blanksIndex]);
-
-  if (!problem) return <Loading />;
-
+  if (lives < 1) return <GameOver />
   return (
-    <div
-      className="flex items-center justify-center w-screen h-screen bg-slate-200"
+    <main
+      className={`main min-h-screen w-screen bg-amber-500`}
       tabIndex={0}
-      onKeyDown={handleKeyDown}
+      onKeyDown={handleKeyPress}
+      ref={main}
     >
-      <main
-        className={`
-          aspect-[9/16]
-          w-full
-          max-w-[400px]
-    
-          rounded-none
-          border-0
-          lg:rounded-[40px]
-          lg:border-[16px]
-          lg:border-black
-          shadow-2xl
-          overflow-hidden
-        `}
-      >
-        {/* Aquí metemos el grid que se expande a todo el contenedor */}
-        <div className="grid grid-cols-2 grid-rows-[1fr_1fr_auto] w-full h-full">
-          <div className="top-left-quadrant bg-red-300 flex justify-center items-center rounded-br-md border-r-2 border-b-2 border-t-2 border-gray-600 drop-shadow-md">
-            <div className="bg-amber-100 text-balance align-middle text-center">
-              Just information sits here.
-            </div>
-          </div>
-          <div className="top-right-quadrant flex justify-center items-center">
-            <MatrixDisplay matrix={problem.top} />
-          </div>
-          <div className="bottom-left-quadrant flex justify-center items-center">
-            <MatrixDisplay matrix={problem.left} />
-          </div>
-          <div className="bottom-right-quadrant flex justify-center items-center">
-            <MatrixDisplay matrix={problem.product} />
-          </div>
-          <div className="controls-area bg-gray-300 col-span-2">
-            <Numpad onClick={handleSubmit} />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+      <div className="top-left-quadrant bg-red-300">
+        <Lives remaining={lives} />
+      </div>
+      <div className="top-right-quadrant bg-violet-600">
+        <MatrixDisplay matrix={question.top} label="top" />
+      </div>
+      <div className="bottom-left-quadrant bg-lime-600">
+        <MatrixDisplay matrix={question.left} label="left" />
+      </div>
+      <div className="bottom-right-quadrant bg-blue-300">
+        <MatrixDisplay matrix={question.product} label="product" />
+      </div>
+      <div className="controls-area bg-gray-300">
+        <Numpad handleClick={handleSubmit} />
+      </div>
+    </main>
+  )
 
-  function blankifyCurrent(prev: MatmulProblem): MatmulProblem {
-    return blankify(prev, prev.blanks.slice(blanksIndex));
+  function handleCorrectAnswer() {
+    updateQuestion(answerIndex)
+    setAnswerIndex(answerIndex + 1)
+  }
+
+  async function updateQuestion(answerIndex: number): Promise<void> {
+    const { matrix, row, column, value } = answer[answerIndex]
+    const updatedQuestion = { ...question }
+    switch (matrix) {
+      case 'top':
+        updatedQuestion.top.data[row][column] = value
+        break
+      case 'left':
+        updatedQuestion.left.data[row][column] = value
+        break
+      case 'product':
+        updatedQuestion.product.data[row][column] = value
+        break
+      default:
+        throw new Error(
+          `Matrix ${matrix} doesn't exist, should be 'top', 'left', or 'product'`
+        )
+    }
+    await setQuestion(updatedQuestion)
+    console.log('updated the cell', question[matrix].data[row][column])
   }
 }
 
-function Numpad({
-  onClick,
-}: {
-  onClick: (value: string) => void;
-}): JSX.Element {
+interface NumpadProps {
+  handleClick: (value: InputValue) => void
+}
+function Numpad({ handleClick }: NumpadProps): JSX.Element {
   return (
-    <div className="grid grid-cols-3 grid-rows-[1fr_1fr_1fr] w-full h-full md:justify-start">
-      {VALID_INPUTS.map((value: string) => {
-        return <Button key={value} value={value} />;
+    <div data-testid="numpad">
+      {VALID_INPUTS.map((value: InputValue) => {
+        return (
+          <button key={value} onClick={() => handleClick(value)}>
+            {value}
+          </button>
+        )
       })}
     </div>
-  );
+  )
+}
 
-  function Button({ value }: { value: string }) {
-    return (
-      <button
-        onClick={() => onClick(value)}
-        value={value}
-        className="bg-blue-500 hover:bg-blue-700 active:bg-blue-900
-                   text-white font-bold border-blue-800 text-2xl border-2
-                   transition-colors duration-100 ease-in-out
-                   flex items-center justify-center"
-      >
-        {value}
-      </button>
-    );
-  }
+interface LivesProps {
+  remaining: number
+}
+function Lives({ remaining }: LivesProps) {
+  if (remaining < 0)
+    throw new Error(
+      `Lives remaining should never be negative, but its value is ${remaining}`
+    )
+  return (
+    <div id="lives">
+      {Array.from({ length: remaining }, (_, i) => {
+        return (
+          <span key={i} data-testid="life">
+            ❤️
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+function GameOver(): JSX.Element {
+  return (
+    <div id="game-over-message" data-testid="game-over-message">
+      <h1>Game Over</h1>
+    </div>
+  )
 }
 
 function Loading(): JSX.Element {
   return (
-    <div className="text-gray-600 h-screen w-screen text-3xl flex items-center justify-center">
-      Loading...<span className="animate-spin">↻</span>
-    </div>
-  );
-}
-
-export function blankify(p: MatmulProblem, blanks: Blank[]): MatmulProblem {
-  const b = JSON.parse(JSON.stringify(p));
-  for (const keys of blanks) {
-    b[keys.matrix].data[keys.row][keys.column] = keys.symbol;
-  }
-  return b;
+    <h1>
+      Loading <span className="animate-spin">o</span>
+    </h1>
+  )
 }

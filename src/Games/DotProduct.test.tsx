@@ -1,218 +1,132 @@
-// import { describe, test, expect, vi, beforeAll, beforeEach } from "vitest";
-// import { MatmulProblem, blankify } from "./DotProduct";
-// import { render, waitFor, screen, fireEvent } from "@testing-library/react"
-// import { DotProduct } from "./DotProduct";
-// import userEvent from '@testing-library/user-event';
+import { describe, test, expect, beforeEach, vi } from 'vitest'
+import { render } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
+import { DotProduct } from './DotProduct'
+import { VALID_INPUTS } from './constants'
 
-// const url = "http://localhost:8000/workbook/api/dotproduct/";
+const testProblems: MatmulProblem[] = getTestProblems()
 
-// describe("DotProduct", () => {
-//   test("can fetch a problem", async () => {
-//     const response = await fetch(url);
-//     const data = await response.json();
-//     const firstProblem = data[0].question;
-//     expect(firstProblem).toHaveProperty("left");
-//     expect(firstProblem).toHaveProperty("top");
-//     expect(firstProblem).toHaveProperty("product");
-//   });
+describe('DotProduct', () => {
+  let dotProduct: any
+  beforeEach(() => {
+    dotProduct = render(<DotProduct problem={testProblems[0]} />)
+  })
+  test('renders 3 matrices (the factors and their product', () => {
+    expect(dotProduct.getAllByTestId('matrix-display').length).toBe(3)
+  })
+  test('there is a numpad for digits 0 to 9, `decimal point` and `minus sign`', async () => {
+    const buttons = dotProduct.getAllByRole('button')
+    expect(buttons.length).toBe(12)
+    for (let value of VALID_INPUTS) {
+      expect(buttons.map((b: any) => b.textContent)).toContain(value)
+    }
+  })
+  test('the user starts with 3 lives', () => {
+    const lives = dotProduct.getAllByTestId('life')
+    expect(lives.length).toBe(3)
+  })
+  test('only clicking the wrong button deducts a life`', async () => {
+    const buttons = dotProduct.getAllByRole('button')
+    await userEvent.click(buttons[0])
+    expect(dotProduct.getAllByTestId('life').length).toBe(2)
+    expect(buttons[10].textContent).toBe('0')
+    await userEvent.click(buttons[10])
+    expect(dotProduct.getAllByTestId('life').length).toBe(2)
+  })
+  test('user can input from the keyboard', async () => {
+    await userEvent.keyboard('1')
+    expect(dotProduct.getAllByTestId('life').length).toBe(2)
+    await userEvent.keyboard('0')
+    expect(dotProduct.getAllByTestId('life').length).toBe(2)
+  })
+  test('running out of lives shows game over', async () => {
+    await userEvent.keyboard('123')
+    expect(dotProduct.getByTestId('game-over-message')).toBeTruthy()
+  })
+  test('clicking the correct button updates the a matrix', async () => {
+    const cell = dotProduct.getByTestId('matrix-top-cell-2-0')
+    expect(cell.textContent).toBe('')
+    await userEvent.keyboard('0')
+    expect(cell.textContent).toBe('0')
+  })
+  test('submitting all the correct values shows "correct" or something like it', async () => {
+    await userEvent.keyboard('123')
+    expect(dotProduct.getByTestId('game-over-message')).toBeTruthy()
+  })
+})
 
-//   test("can blank the matrices to the user has to fill them in", async () => {
-//     const response = await fetch(url);
-//     const data = await response.json();
-//     const firstProblem = data[0].question;
-
-//     const b = blankify(firstProblem, firstProblem.blanks);
-//     const keys = firstProblem.blanks[0];
-//     expect(keys.matrix).toBe("product");
-//     expect(keys.row).toBe(0);
-//     expect(keys.column).toBe(0);
-//     const actual = b[keys.matrix as keyof MatmulProblem] as Matrix;
-//     expect(actual.data).toEqual(b.product.data);
-//     expect(actual.data[keys.row]).toEqual(b.product.data[0]);
-//     expect(actual.data[keys.row][keys.column]).toEqual(b.product.data[0][0]);
-//     expect(actual.data[keys.row][keys.column]).toEqual(keys.symbol);
-//   });
-// });
-
-// describe("DotProductComponent", () => {
-//   let testData = [
-//     {
-//       "id": 20,
-//       "question": {
-//           "left": {
-//               "data": [
-//                   [
-//                       1,
-//                       0,
-//                       -1
-//                   ]
-//               ],
-//               "rows": 1,
-//               "columns": 3,
-//               "name": "b"
-//           },
-//           "top": {
-//               "data": [
-//                   [
-//                       8
-//                   ],
-//                   [
-//                       4
-//                   ],
-//                   [
-//                       5
-//                   ]
-//               ],
-//               "rows": 3,
-//               "columns": 1,
-//               "name": "a"
-//           },
-//           "product": {
-//               "data": [
-//                   [
-//                       3
-//                   ]
-//               ],
-//               "rows": 1,
-//               "columns": 1,
-//               "name": "a·b"
-//           },
-//           "blanks": [
-//               {
-//                   "matrix": "left",
-//                   "row": 0,
-//                   "column": 2,
-//                   "symbol": "",
-//                   "keys": "-1"
-//               }
-//           ],
-//           "answers": [
-//               "-1"
-//           ]
-//       },
-//       "answer": [
-//           "-1"
-//       ]
-//   }]
-
-//   beforeAll( async () => {
-//     global.fetch = vi.fn(() =>
-//       Promise.resolve({
-//         json: () =>
-//           Promise.resolve(testData),
-//       })
-//     );
-
-//     render(<DotProduct />);
-
-//     // Ensure loading screen appears first
-//     // expect(screen.getByText(/loading/i)).toBeInTheDocument();
-  
-
-//     const {left, top, product} = blankify(testData[0].question, testData[0].question.blanks);
-//     const expectedCellValues = [...left.data.flat(), ...top.data.flat(), ...product.data.flat()]
-    
-//     expect(expectedCellValues[0]).toBe(1);
-//     expect(expectedCellValues[1]).toBe(0);
-//     expect(expectedCellValues[2]).toBe("");
-//     expect(expectedCellValues[3]).toBe(8);
-//     expect(expectedCellValues[4]).toBe(4);
-//     expect(expectedCellValues[5]).toBe(5);
-//     expect(expectedCellValues[6]).toBe(3);
-
-//       // Wait for the component to update
-//     await waitFor(async () => {
-//       const cellValues = await screen.getAllByRole("cell").map(x => x.textContent);
-//       expectedCellValues.forEach(value => {
-//         expect(cellValues).toContain(value.toString())
-//       })
-    
-//     }, { timeout: 3000 });
-//   });
-
-//   beforeEach(async () => {
-//     render(<DotProduct />);
-//     await waitFor(async () => {
-//       const cellValues = await screen.getAllByRole("cell").map(x => x.textContent);
-//       expectedCellValues.forEach(value => {
-//         expect(cellValues).toContain(value.toString())
-//       })
-    
-//     }, { timeout: 3000 });
-//     vi.restoreAllMocks();
-//   });
-
-//   test("fetch is mocked return specific matrix data", async () => {
-//     const data = await fetch(url).then((response) => response.json());
-
-//     expect(data).toEqual([
-//       {
-//         "id": 20,
-//         "question": {
-//             "left": {
-//                 "data": [
-//                     [
-//                         1,
-//                         0,
-//                         -1
-//                     ]
-//                 ],
-//                 "rows": 1,
-//                 "columns": 3,
-//                 "name": "b"
-//             },
-//             "top": {
-//                 "data": [
-//                     [
-//                         8
-//                     ],
-//                     [
-//                         4
-//                     ],
-//                     [
-//                         5
-//                     ]
-//                 ],
-//                 "rows": 3,
-//                 "columns": 1,
-//                 "name": "a"
-//             },
-//             "product": {
-//                 "data": [
-//                     [
-//                         3
-//                     ]
-//                 ],
-//                 "rows": 1,
-//                 "columns": 1,
-//                 "name": "a·b"
-//             },
-//             "blanks": [
-//                 {
-//                     "matrix": "left",
-//                     "row": 0,
-//                     "column": 2,
-//                     "symbol": "",
-//                     "keys": "-1"
-//                 }
-//             ],
-//             "answers": [
-//                 "-1"
-//             ]
-//         },
-//         "answer": [
-//             "-1"
-//         ]
-//     },
-//     ]);
-//   });
-
-//   test("key press of correct value unblanks a cell", async () => {
-//     let cellValues = await screen.getAllByRole("cell").map(x => x.textContent);
-//     const initialValueCount = cellValues.reduce((count, value) => { return value === "1" ? count+1 : count }, 0);
-//     await userEvent.keyboard("1")
-//     cellValues = await screen.getAllByRole("cell").map(x => x.textContent);
-//     const finalValueCount = cellValues.reduce((count, value) => { return value === "1" ? count+1 : count }, 0);
-//     expect(finalValueCount).toBe(initialValueCount + 1);
-//   });
-// });
+function getTestProblems(): MatmulProblem[] {
+  return [
+    {
+      id: 0,
+      question: {
+        left: {
+          data: [[3, 1, -2]],
+          rows: 1,
+          columns: 3,
+          name: 'b',
+        },
+        top: {
+          data: [[1], [4], ['']],
+          rows: 3,
+          columns: 1,
+          name: 'a',
+        },
+        product: {
+          data: [[7]],
+          rows: 1,
+          columns: 1,
+          name: 'a·b',
+        },
+      },
+      answer: [
+        {
+          matrix: 'top',
+          row: 2,
+          column: 0,
+          key: '0',
+          value: 0,
+        },
+      ],
+    },
+    {
+      id: 1,
+      question: {
+        left: {
+          data: [[3, 1, 2]],
+          rows: 1,
+          columns: 3,
+          name: 'b',
+        },
+        top: {
+          data: [[1], [4], [10]],
+          rows: 3,
+          columns: 1,
+          name: 'a',
+        },
+        product: {
+          data: [[27]],
+          rows: 1,
+          columns: 1,
+          name: 'a·b',
+        },
+      },
+      answer: [
+        {
+          matrix: 'product',
+          row: 0,
+          column: 0,
+          key: '2',
+          value: '2_',
+        },
+        {
+          matrix: 'product',
+          row: 0,
+          column: 0,
+          key: '7',
+          value: '27',
+        },
+      ],
+    },
+  ]
+}
